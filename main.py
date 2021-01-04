@@ -1,13 +1,13 @@
 import difflib
-
 from mitmproxyscanandread import scancoomandsfromfile
 import csv
 
 
 list = (scancoomandsfromfile.makeCommands())
-print(list[2])
-with open('./Payloads/SQLi_Payloads.csv', newline='') as csvfile:
-    spamreader = csv.reader(csvfile)
+print(list[0])
+with open('./Payloads/XSS_Payloads.csv', 'r') as csvfile:
+    spamreader = csv.reader(csvfile,delimiter = '\t')
     for row in spamreader:
-        similarity = difflib.SequenceMatcher(None, 'aaaaaaaa', row).ratio()
+        similarity = difflib.SequenceMatcher(None, list[0], row[0]).ratio()
+        print(row[0])
         print(similarity*100)

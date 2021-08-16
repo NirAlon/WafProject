@@ -1,8 +1,8 @@
 # Web Application Firewall (WAF) &copy;
-###Nir Alon 
+
 ***
 ### Summary 
-The project objective is building a Web Application Firewall that monitors and analyzes HTTP requests that are  designated to dedicated web server from common malicious  web attacks.
+The project objective is building a Web Application Firewall that monitors and analyzes HTTP/HTTPS requests that are  designated to defence web server from common malicious  web attacks.
 
 Based on deep learning algorithm (CNN) on TensorFlow. 
 
@@ -28,6 +28,9 @@ the website have 5 pages:
 * Stored XSS page: This page demonstrates users in the database that use the user registration page for input XSS malicious code. for example instead of first name the user put XSS code to store in the database.
 * CSRF page: this page can be hacked if you removed the *python annotation*, this type of attack use the csrf token to validate the user actions.
 * Settings page: in this page you choose if you want to defend from the different attacks and activate the WAF protection. once you activate the WAF all the next malicious attacks will be blocked by the **WAF MODELS**
+
+### Link to the demo_site with WAF protection option : 
+http://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/demo_site
 
 ##**HOW TO MAKE IT WORKS?**
 

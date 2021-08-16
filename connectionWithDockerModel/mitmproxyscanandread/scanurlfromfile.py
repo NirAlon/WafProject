@@ -4,7 +4,7 @@
 from mitmproxy.addons import export
 from mitmproxy.io import FlowReader
 
-filename = '/Users/niralon/requests.mitm'
+filename = '/path/to/requests.mitm'
 
 with open(filename, 'rb') as fp:
     reader = FlowReader(fp)

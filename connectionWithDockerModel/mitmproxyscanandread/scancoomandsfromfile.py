@@ -1,4 +1,3 @@
-from mitmproxy.addons import export
 from mitmproxy.addons.export import cleanup_request, pop_headers, request_content_for_console
 import shlex
 from mitmproxy import flow

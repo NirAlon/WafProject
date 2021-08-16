@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
 from DBwaf.user import validation_email, check_strong_password
-from main.models import Logger, UsersDemo, User_value, FlagWaf
+from main.models import Logger, UsersDemo
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -22,37 +22,26 @@ from django.core.cache import cache
 regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 XSS_THRESHOLD = 0.45
 SQL_THRESHOLD = 0.5
-waf = FlagWaf()
 
 def set_waf_flag_cookie(request):
-    print("COOKIES: ",request.COOKIES)
     select = request.POST.get('radio')
-    print('#set_waf_flag_cookie#')
     if request.session['waf_flag'] is None or select == 'no_protection':
         request.session['waf_flag'] = False
-        print("request.user: ",request.user)
         request.session['threshold_xss'] = XSS_THRESHOLD
         request.session['threshold_sql'] = SQL_THRESHOLD
-        waf.flag_waf = False
         request.session.save()
-        #for key, value in request.session.items(): print('{} => {}'.format(key, value))
 
-    elif select == 'protection':  # run the WAF system
+    elif select == 'protection':
         request.session['waf_flag'] = True
-        waf.flag_waf = True
-        #flag.flag_waf = True
         if request.POST.get('threshold_xss') != '':
             request.session['threshold_xss'] = request.POST.get('threshold_xss')
         if request.POST.get('threshold_sql') != '':
             request.session['threshold_sql'] = request.POST.get('threshold_sql')
         request.session.save()
-        print('Request[waf_flag]=True')
-        #for key, value in request.session.items(): print('{} => {}'.format(key, value))
-
     return request
 
 
-def export_logger_csv(request):
+def export_logger_csv():
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="logger.csv"'
 
@@ -89,10 +78,10 @@ def demo_setting(request):
 
     if request.method == 'POST':
 
-        if request.session['waf_flag'] is False:  # don't run the WAF system
+        if request.session['waf_flag'] is False:
             messages.success(request, "The site is unprotected now by WAF")
             context = {'message_waf': 'The site is unprotected by WAF'}
-        elif request.session['waf_flag'] is True:  # run the WAF system
+        elif request.session['waf_flag'] is True:
             messages.success(request, "The site is protected now by WAF")
             context = {'message_waf': 'The site is protected by WAF'}
 
@@ -107,31 +96,25 @@ def if_text_vulnerable(text, request):
         Logger.objects.create(
             email=cur_email, date=datetime.now(), threshold=res * 100,
             type_attack="Reflected XSS", command=text, if_warn=True)
-        print('save true XSS to logger ****')
         return True
-
     else:
         Logger.objects.create(
             email=cur_email, date=datetime.now(), threshold=res * 100,
             type_attack="Reflected XSS", command=text, if_warn=False)
-        print('save false XSS to logger ****')
         return False
 
 def if_text_vulnerable_sql(text, request):
     res = predict_sqli_attack(text)
     cur_email = request.user.get_username()
-    print(res, "sql result")
     if res > float(request.session['threshold_sql']):
         Logger.objects.create(
             email=cur_email, date=datetime.now(), threshold=res * 100,
             type_attack="SQL", command=text, if_warn=True)
-        print('save true SQL to logger ****')
         return True
     else:
         Logger.objects.create(
             email=cur_email, date=datetime.now(), threshold=res * 100,
             type_attack="SQL", command=text, if_warn=False)
-        print('save false SQL to logger ****')
         return False
 
 
@@ -139,7 +122,6 @@ def if_text_vulnerable_sql(text, request):
 def my_view(request):
     @csrf_protect
     def change_password_protected(request):
-        print("*change_password_protected*")
         if request.method == 'GET':
             return render(request, template_name='main/change_password.html')
 
@@ -153,8 +135,6 @@ def my_view(request):
                                         'At least 1 special character.')
                 return redirect('change_pass')
             else:
-                print("User name!!")
-                print(cache.get('user'))
                 u = User.objects.get(username=cache.get('user'))
                 u.set_password(new_pss)
                 u.save()
@@ -166,8 +146,7 @@ def my_view(request):
                 cache.delete('user')
                 logout(request)
                 return render(request, template_name='main/home.html')
-    print('request flag waf is: ', waf.flag_waf)
-    if waf.flag_waf is True:
+    if request.session['waf_flag'] is True:
         return change_password_protected(request)
 
     else:
@@ -175,7 +154,6 @@ def my_view(request):
 
 
 def change_password(request):
-    print("*change_password*")
     if request.method == 'GET':
         return render(request, template_name='main/change_password.html')
 
@@ -189,8 +167,6 @@ def change_password(request):
                                     'At least 1 special character.')
             return redirect('change_pass')
         else:
-            print("User name!!")
-            print(cache.get('user'))
             u = User.objects.get(username=cache.get('user'))
             u.set_password(new_pss)
             u.save()
@@ -201,8 +177,6 @@ def change_password(request):
 
 
 def demo_sql(request):
-    context = {}
-
     if request.method == 'GET':
         if request.session['waf_flag'] is True:
             context = {'message_waf': 'The site is protected by WAF'}
@@ -214,15 +188,10 @@ def demo_sql(request):
 
         user_name = request.POST.get('username')
         user_password = request.POST.get('password')
-
-        # cur_user = UsersDemo.objects.raw('SELECT * FROM main_usersDemo WHERE username = %s
-        # AND password = %s', [user_name,user_password])
         sql = f"SELECT * FROM main_usersDemo WHERE username = '{user_name}' AND password = '{user_password}'"
-        print(sql)
 
         if request.session['waf_flag'] is True:
             context = {'message_waf': 'The site is protected by WAF'}
-            print('start Sql injection *with* WAF')
             res_userName = if_text_vulnerable_sql(user_name, request)
             res_userPassword = if_text_vulnerable_sql(user_password, request)
 
@@ -233,18 +202,14 @@ def demo_sql(request):
                 cur_user = UsersDemo.objects.raw(sql)
         else:
             context = {'message_waf': 'The site is unprotected by WAF'}
-            print('start Sql injection *without* WAF')
             cur_user = UsersDemo.objects.raw(sql)
         try:
-            print('user found! username: ', cur_user[0].username, ' pass: ', cur_user[0].password)
-            messages.success(request, "user found")
+            messages.success(request, str("",cur_user[0].username,"user found"))
         except IndexError:
             messages.error(request, "user not found")
-            print('user *not* found! username: ', user_name, ' pass: ', user_password)
         except Exception as e:
             print(e.__class__)
             return render(request, 'main/sql_demo.html', context)
-            # pass  # no rows returned
 
         return render(request, 'main/sql_demo.html', context)
 
@@ -312,10 +277,7 @@ def login_page(request):
                                     'At least 1 special character.')
             return redirect('login')
 
-        # else:
-        #user_session.user = authenticate(username=email, password=password)
         cache.set('user',authenticate(username=email, password=password))
-        print(cache.get('user'))
         if cache.get('user') is not None:
 
             login(request, cache.get('user'))
@@ -337,7 +299,7 @@ def index(request):
     return render(request, 'form.html')
 
 
-def if_text_vulnerable_xss_from_resonse(text, username, request):
+def if_text_vulnerable_xss_from_response(text, username, request):
     res = xss_proccesor(str(text))
     cur_email = username
     if res > float(request.session['threshold_xss']):
@@ -352,22 +314,22 @@ def if_text_vulnerable_xss_from_resonse(text, username, request):
         return False
 
 
-def search(request):
+def stored_xss(request):
     try:
         if request.method == 'GET':
             from django.contrib.auth.models import User
-
-            all_users = list(User.objects.values())
             if request.session['waf_flag'] is True:
-                desired_keys = ["username", "first_name", "last_name", "email"]
+                all_users = list(User.objects.values())
+                desired_keys = ["first_name", "last_name"]
                 for user in all_users:
-                    for key, value in user.items():
-                        if key in desired_keys and len(value) > 0:
-                            if if_text_vulnerable_xss_from_resonse(value, user['username'], request) is True:
-                                user[key] = 'XSS ATTACK'
+                    filtered_dict = {k:v for k,v in user.items() if k in desired_keys}
+                    x = [k for k,v in filtered_dict.items() if len(v)>0 and if_text_vulnerable_xss_from_response(v, user['username'], request)]
+                    for i in x:
+                        user[i] = 'XSS ATTACK'
                 return render(request, 'main/form.html', {'users': all_users,
                                                           'message_waf': 'The site is protected by WAF'})
             else:
+                all_users = list(User.objects.values())
                 return render(request, 'main/form.html', {'users': all_users,
                                                           'message_waf': 'The site is unprotected by WAF'})
 
@@ -391,9 +353,7 @@ def demo_xss(request):
         return render(request, 'main/xss_demo.html', context)
 
     if request.method == 'POST':
-        print(request.POST)
-        search_id: object = request.POST.get('txtName')
-
+        search_id = request.POST.get('txtName')
         if request.session['waf_flag'] is True:
             if if_text_vulnerable(search_id, request) is True:
                 context = {'text': "XSS ATTACK", 'message_waf': 'The site is protected by WAF'}

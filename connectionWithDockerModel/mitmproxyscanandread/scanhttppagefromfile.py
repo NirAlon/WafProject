@@ -3,7 +3,7 @@ from mitmproxy.addons import export
 
 
 
-filename = '/Users/niralon/requests.mitm'
+filename = '/Path/to/requests.mitm'
 
 with open(filename, 'rb') as fp:
     reader = FlowReader(fp)

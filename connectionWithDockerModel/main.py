@@ -1,9 +1,6 @@
 from __future__ import print_function
-#from mitmproxyscanandread import scancoomandsfromfile
-import base64
 import json
 import pickle
-import sklearn
 from main.models import Logger
 import numpy as np
 import requests
@@ -81,7 +78,6 @@ def make_prediction_sql(instances):
     data = json.dumps({"signature_name": "serving_default", "instances": instances.tolist()})
     headers = {"content-type": "application/json"}
     json_response = requests.post(SERVER_URL_SQL, data=data, headers=headers)
-    print(json_response)
     predictions = json.loads(json_response.text)['predictions']
     return predictions
 
@@ -124,12 +120,9 @@ def clean_data(input_val):
 
 def xss_proccesor(req):
     list_proxy = [req]
-    #print(list_proxy)
-
     for l in list_proxy:
         if(len(l)>0):
             sentences2 = [l]
-            print(sentences2)
             arr2 = np.zeros((len(sentences2), 100, 100))
 
             for i in range(len(sentences2)):
@@ -141,25 +134,15 @@ def xss_proccesor(req):
             data2 = arr2.reshape(arr2.shape[0], 100, 100, 1)
             data2.shape
             res = make_prediction_xss(data2)
-            if (res[0][0]>0.8):
-                print(res[0][0])
-                print('XSS ATTACK')
-            else:
-                print(res[0][0])
-                print('OK')
+
     return res[0][0]
 
 
 def predict_sqli_attack(req):
 
     myvectorizer = pickle.load(open('connectionWithDockerModel/vectorizer_cnn', 'rb'))
-    beautify = ''
-    for i in range(20):
-        beautify += "="
 
-    print(beautify)
     input_val = req
-    print(beautify)
 
     if input_val == '0':
         repeat = False
@@ -170,48 +153,19 @@ def predict_sqli_attack(req):
 
     result = make_prediction_sql(input_val)
 
-    print(beautify)
-
-
-
-    if result[0][0] > 0.8:
-        print(result[0][0])
-        print("ALERT :::: This can be SQL injection: ",req)
-
-
-    elif result[0][0] <= 0.8:
-        print(result[0][0])
-        print("It seems to be safe: ",req)
-
-    print(beautify)
-
     return result[0][0]
 
 
 def if_text_vulnerable(text):
-    #print('into method if_text_vulnerable')
     res = xss_proccesor(text)
-    #print(text+": ")
-    #print(res)
-    #cur_email = request.user.get_username()
     if res > XSS_THRESHOLD:
-        # save_to_log = Logger.objects.create(
-        #     email=cur_email, date=date.today(), threshold=res*100,
-        #     type_attack="Reflected XSS", command=text, if_warn=True)
-        # print('save true XSS to logger ****')
         return True
 
     else:
-        # save_to_log = Logger.objects.create(
-        #     email=cur_email, date=date.today(), threshold=res*100,
-        #     type_attack="Reflected XSS", command=text, if_warn=False)
-        # print('save false XSS to logger ****')
         return False
 
 
 def main():
-    #predict_sqli_attack()
-    #xss_proccesor()
     list = (scancoomandsfromfile.makeCommands())
     for l in list:
         if len(l)>1:
@@ -220,8 +174,6 @@ def main():
                 Logger.objects.create(
                     email='client', date=datetime.now(), threshold=xss_res * 100,
                     type_attack="Dom XSS", command=l, if_warn=True)
-                print(l +" = XSS ATTACK")
-
 
 if __name__ == '__main__':
     main()

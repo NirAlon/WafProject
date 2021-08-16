@@ -12,6 +12,3 @@ with open(filename, 'rb') as fp:
     for flow in reader.stream():
         encoding = 'utf-8'
         list.append(export.httpie_command(flow))
-
-    for l in list:
-        print(l)

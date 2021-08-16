@@ -4,7 +4,6 @@ regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 
 
 def check_strong_password(password: object) -> object:
-    print("HERE check_strong_password")
     # Primary conditions for password validation :
         # Minimum 8 characters.
         # The alphabets must be between [a-z]
@@ -26,12 +25,10 @@ def check_strong_password(password: object) -> object:
         else:
             return True  # Valid Password
     else:
-        print("Password must be at least 8 characters long")
         return False
 
 
 def validation_email(email):
-    print("HERE validation_email")
     if re.search(regex, email):
         return True
     else:

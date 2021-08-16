@@ -1,12 +1,14 @@
 from __future__ import print_function
 import json
 import pickle
-from main.models import Logger
+from datetime import datetime
+
 import numpy as np
 import requests
 import cv2
 from connectionWithDockerModel.mitmproxyscanandread import scancoomandsfromfile
-from datetime import datetime
+from main.models import Logger
+
 XSS_THRESHOLD = 0.5
 
 # The server URL specifies the endpoint of your server running the ResNet
@@ -25,30 +27,30 @@ def convert_to_ascii(sentence):
         I am removing letters having values greater than 8222 and for rest greater 
         than 128 and smaller than 8222 assigning them values so they can easily be normalized"""
 
-        if (ord(i) < 8222):  # ” has ASCII of 8221
+        if ord(i) < 8222:  # ” has ASCII of 8221
 
-            if (ord(i) == 8217):  # ’  :  8217
+            if ord(i) == 8217:  # ’  :  8217
                 sentence_ascii.append(134)
 
-            if (ord(i) == 8221):  # ”  :  8221
+            if ord(i) == 8221:  # ”  :  8221
                 sentence_ascii.append(129)
 
-            if (ord(i) == 8220):  # “  :  8220
+            if ord(i) == 8220:  # “  :  8220
                 sentence_ascii.append(130)
 
-            if (ord(i) == 8216):  # ‘  :  8216
+            if ord(i) == 8216:  # ‘  :  8216
                 sentence_ascii.append(131)
 
-            if (ord(i) == 8217):  # ’  :  8217
+            if ord(i) == 8217:  # ’  :  8217
                 sentence_ascii.append(132)
 
-            if (ord(i) == 8211):  # –  :  8211
+            if ord(i) == 8211:  # –  :  8211
                 sentence_ascii.append(133)
 
             """
             If values less than 128 store them else discard them
             """
-            if (ord(i) <= 128):
+            if ord(i) <= 128:
                 sentence_ascii.append(ord(i))
 
             else:
@@ -61,8 +63,6 @@ def convert_to_ascii(sentence):
 
     zer.shape = (100, 100)
 
-    #     plt.plot(image)
-    #     plt.show()
     return zer
 
 
@@ -173,7 +173,7 @@ def main():
             if xss_res:
                 Logger.objects.create(
                     email='client', date=datetime.now(), threshold=xss_res * 100,
-                    type_attack="Dom XSS", command=l, if_warn=True)
+                    type_attack='Dom XSS', command=l, if_warn=True)
 
 if __name__ == '__main__':
     main()

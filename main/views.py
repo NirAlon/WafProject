@@ -22,6 +22,12 @@ from django.core.cache import cache
 regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 XSS_THRESHOLD = 0.45
 SQL_THRESHOLD = 0.5
+password_rules = 'The password must contain: '
+'alphabets between [a-z],'
+'At least one alphabet of Upper Case [A-Z],'
+'At least 1 number or digit between [0-9],'
+'At least 1 special character.'
+
 
 def set_waf_flag_cookie(request):
     select = request.POST.get('radio')
@@ -48,11 +54,17 @@ def export_logger_csv():
     writer = csv.writer(response)
     writer.writerow(['Email', 'Date', 'Threshold', 'Type Attack', 'Command', 'If Warn'])
 
-    log = Logger.objects.all().values_list('email', 'date', 'threshold', 'type_attack', 'command', 'if_warn')
-    for l in log:
-        writer.writerow(l)
+    logg = Logger.objects.all().values_list('email', 'date', 'threshold', 'type_attack', 'command', 'if_warn')
+    for log in logg:
+        writer.writerow(log)
 
     return response
+
+
+def save_attack_to_logger(cur_email, res, text, type_attack):
+    Logger.objects.create(
+        email=cur_email, date=datetime.now(), threshold=res * 100,
+        type_attack=type_attack, command=text, if_warn=True)
 
 
 def demo_site(request):
@@ -61,12 +73,7 @@ def demo_site(request):
 
 def demo_setting(request):
     context = {}
-    try:
-        request = set_waf_flag_cookie(request)
-    except:
-        request.session['waf_flag'] = None
-        request.session.save()
-        request = set_waf_flag_cookie(request)
+    request = set_waf_flag_cookie(request)
 
     if request.method == 'GET':
         if request.session['waf_flag'] is True:
@@ -93,46 +100,33 @@ def if_text_vulnerable(text, request):
     cur_email = request.user.get_username()
 
     if res > float(request.session['threshold_xss']):
-        Logger.objects.create(
-            email=cur_email, date=datetime.now(), threshold=res * 100,
-            type_attack="Reflected XSS", command=text, if_warn=True)
+        save_attack_to_logger(cur_email, res, text, type_attack='XSS')
         return True
     else:
-        Logger.objects.create(
-            email=cur_email, date=datetime.now(), threshold=res * 100,
-            type_attack="Reflected XSS", command=text, if_warn=False)
         return False
+
 
 def if_text_vulnerable_sql(text, request):
     res = predict_sqli_attack(text)
     cur_email = request.user.get_username()
     if res > float(request.session['threshold_sql']):
-        Logger.objects.create(
-            email=cur_email, date=datetime.now(), threshold=res * 100,
-            type_attack="SQL", command=text, if_warn=True)
+        save_attack_to_logger(cur_email, res, text, type_attack='SQL INJECTION')
         return True
     else:
-        Logger.objects.create(
-            email=cur_email, date=datetime.now(), threshold=res * 100,
-            type_attack="SQL", command=text, if_warn=False)
         return False
 
 
 @csrf_exempt
 def my_view(request):
     @csrf_protect
-    def change_password_protected(request):
+    def change_password_protected():
         if request.method == 'GET':
             return render(request, template_name='main/change_password.html')
 
         elif request.method == 'POST':
             new_pss = request.POST.get('new_pass')
             if check_strong_password(new_pss) is False:
-                messages.error(request, 'The password must contain: '
-                                        'alphabets between [a-z],'
-                                        'At least one alphabet of Upper Case [A-Z],'
-                                        'At least 1 number or digit between [0-9],'
-                                        'At least 1 special character.')
+                messages.error(request, password_rules)
                 return redirect('change_pass')
             else:
                 u = User.objects.get(username=cache.get('user'))
@@ -140,12 +134,11 @@ def my_view(request):
                 u.save()
                 messages.success(request, "Password changed! login again with the new password")
                 cur_email = cache.get('user')
-                Logger.objects.create(
-                email=cur_email, date=datetime.now(), threshold=None,
-                type_attack="CSRF", command='CSRF attack attempt', if_warn=True)
+                save_attack_to_logger(cur_email, 0, 'CSRF attack attempt', 'CSRF')
                 cache.delete('user')
                 logout(request)
                 return render(request, template_name='main/home.html')
+
     if request.session['waf_flag'] is True:
         return change_password_protected(request)
 
@@ -160,11 +153,7 @@ def change_password(request):
     elif request.method == 'POST':
         new_pss = request.POST.get('new_pass')
         if check_strong_password(new_pss) is False:
-            messages.error(request, 'The password must contain: '
-                                    'alphabets between [a-z],'
-                                    'At least one alphabet of Upper Case [A-Z],'
-                                    'At least 1 number or digit between [0-9],'
-                                    'At least 1 special character.')
+            messages.error(request, password_rules)
             return redirect('change_pass')
         else:
             u = User.objects.get(username=cache.get('user'))
@@ -192,10 +181,10 @@ def demo_sql(request):
 
         if request.session['waf_flag'] is True:
             context = {'message_waf': 'The site is protected by WAF'}
-            res_userName = if_text_vulnerable_sql(user_name, request)
-            res_userPassword = if_text_vulnerable_sql(user_password, request)
+            res_username = if_text_vulnerable_sql(user_name, request)
+            res_userpassword = if_text_vulnerable_sql(user_password, request)
 
-            if res_userName or res_userPassword:
+            if res_username or res_userpassword:
                 messages.error(request, "sql injection!")
                 return render(request, 'main/sql_demo.html', context)
             else:
@@ -204,7 +193,7 @@ def demo_sql(request):
             context = {'message_waf': 'The site is unprotected by WAF'}
             cur_user = UsersDemo.objects.raw(sql)
         try:
-            messages.success(request, str("",cur_user[0].username,"user found"))
+            messages.success(request, str(cur_user[0].username, "user found"))
         except IndexError:
             messages.error(request, "user not found")
         except Exception as e:
@@ -246,6 +235,7 @@ def logger_page(request):
 
         return render(request, template_name='main/logger.html', context={'loggers': loggers1})
 
+
 @api_view(['POST'])
 def api_create_log_view(request):
     if request.method == 'POST':
@@ -270,14 +260,10 @@ def login_page(request):
             return redirect('login')
 
         elif check_strong_password(password) is False:
-            messages.error(request, 'The password must contain: '
-                                    'alphabets between [a-z],'
-                                    'At least one alphabet of Upper Case [A-Z],'
-                                    'At least 1 number or digit between [0-9],'
-                                    'At least 1 special character.')
+            messages.error(request, password_rules)
             return redirect('login')
 
-        cache.set('user',authenticate(username=email, password=password))
+        cache.set('user', authenticate(username=email, password=password))
         if cache.get('user') is not None:
 
             login(request, cache.get('user'))
@@ -295,6 +281,7 @@ def logoutpage(request):
     messages.success(request, f'You have been logged out!')
     return redirect('home')
 
+
 def index(request):
     return render(request, 'form.html')
 
@@ -303,14 +290,9 @@ def if_text_vulnerable_xss_from_response(text, username, request):
     res = xss_proccesor(str(text))
     cur_email = username
     if res > float(request.session['threshold_xss']):
-        Logger.objects.create(
-            email=cur_email, date=datetime.now(), threshold=res * 100,
-            type_attack="Stored XSS", command=text, if_warn=True)
+        save_attack_to_logger(cur_email, res, text, "Stored XSS")
         return True
     else:
-        Logger.objects.create(
-            email=cur_email, date=datetime.now(), threshold=res * 100,
-            type_attack="Stored XSS", command=text, if_warn=False)
         return False
 
 
@@ -322,8 +304,9 @@ def stored_xss(request):
                 all_users = list(User.objects.values())
                 desired_keys = ["first_name", "last_name"]
                 for user in all_users:
-                    filtered_dict = {k:v for k,v in user.items() if k in desired_keys}
-                    x = [k for k,v in filtered_dict.items() if len(v)>0 and if_text_vulnerable_xss_from_response(v, user['username'], request)]
+                    filtered_dict = {k: v for k, v in user.items() if k in desired_keys}
+                    x = [k for k, v in filtered_dict.items() if
+                         len(v) > 0 and if_text_vulnerable_xss_from_response(v, user['username'], request)]
                     for i in x:
                         user[i] = 'XSS ATTACK'
                 return render(request, 'main/form.html', {'users': all_users,

@@ -17,7 +17,6 @@ class FlagWaf:
     flag_waf = models.BooleanField()
     @property
     def lag_waf(self):
-        print(self.flag_waf, "Waf flag is: ")
         return self.flag_waf
 
 
@@ -25,7 +24,6 @@ class User_value:
     user = None
     @property
     def user_val(self):
-        print("user is:", self.user)
         return self.user
 
 

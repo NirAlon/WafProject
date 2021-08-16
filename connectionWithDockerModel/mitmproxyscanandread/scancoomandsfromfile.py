@@ -30,8 +30,6 @@ def makeCommands():
         i = l.find('?')
         if(i != -1 ):
             url_list.append(l[i+1:])
-    #print(url_list)
-
 
     final=['']
     index=0

@@ -40,7 +40,7 @@ http://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/demo_site
 *Once your server is up go to  http://127.0.0.1:8000/demo_site*
 
 3. Activate the models with docker:
-* The models can be downloaded here : {Link}
+* The models can be downloaded here : https://drive.google.com/file/d/1yvDGWF2v7DdcjaNwYqnGr7cprvjwjd89/view?usp=sharing
 * With docker run this two commands and make sure you set the right **path on source**
 
 Deploy SQL container

@@ -49,6 +49,7 @@
         <list>
           <option value="main.models.Logger.objects" />
           <option value="main.models.UsersDemo.objects" />
+          <option value="dict.success" />
         </list>
       </option>
     </inspection_tool>

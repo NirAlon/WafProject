@@ -1,6 +1,16 @@
-import re  # for regular expressions
+import re
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.core.cache import cache
+from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.contrib.auth.models import User
+
+from DBwaf.logger import save_attack_to_logger
 
 regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+PASSWORD_RULES = 'The password must contain: alphabets between [a-z], At least one alphabet of Upper Case [A-Z], ' \
+                 'At least 1 number or digit between [0-9], At least 1 special character. '
 
 
 def check_strong_password(password: object) -> object:
@@ -35,6 +45,96 @@ def validation_email(email):
         return False
 
 
-if __name__ == '__main__':
+def authenticate_user(email, password):
+    return authenticate(username=email, password=password)
 
-    pass
+
+def user_login(request, user):
+    return login(request, user)
+
+
+def user_logout(request):
+    return logout(request)
+
+
+@csrf_exempt
+def change_password_anno(request):
+    @csrf_protect
+    def change_password_protected():
+        if request.method == 'GET':
+            return render(request, template_name='main/change_password.html')
+
+        elif request.method == 'POST':
+            new_pss = request.POST.get('new_pass')
+            if check_strong_password(new_pss) is False:
+                messages.error(request, PASSWORD_RULES)
+                return redirect('change_pass')
+            else:
+                u = User.objects.get(username=cache.get('user'))
+                u.set_password(new_pss)
+                u.save()
+                messages.success(request, "Password changed! login again with the new password")
+                cur_email = cache.get('user')
+                save_attack_to_logger(cur_email, 0, 'CSRF attack attempt', 'CSRF')
+                cache.delete('user')
+                user_logout(request)
+                return render(request, template_name='main/home.html')
+
+    if request.session['waf_flag'] is True:
+        return change_password_protected(request)
+
+    else:
+        return change_password(request)
+
+
+def change_password(request):
+    if request.method == 'GET':
+        return render(request, template_name='main/change_password.html')
+
+    elif request.method == 'POST':
+        new_pss = request.POST.get('new_pass')
+        if check_strong_password(new_pss) is False:
+            messages.error(request, PASSWORD_RULES)
+            return redirect('change_pass')
+        else:
+            u = User.objects.get(username=cache.get('user'))
+            u.set_password(new_pss)
+            u.save()
+            messages.success(request, "Password changed! login again with the new password")
+            user_logout(request)
+            cache.delete('user')
+            return render(request, template_name='main/home.html')
+
+def login_page(request):
+    if request.method == 'GET':
+        return render(request, template_name='main/login.html')
+
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        if validation_email(email) is False:
+            messages.error(request, 'email must be in the format of example@example.com')
+            return redirect('login')
+
+        elif check_strong_password(password) is False:
+            messages.error(request, PASSWORD_RULES)
+            return redirect('login')
+
+        cache.set('user', authenticate_user(email,password))
+        if cache.get('user') is not None:
+
+            user_login(request, cache.get('user'))
+            messages.success(request, f'You are logged in as {cache.get("user")}')
+            return redirect('home')
+
+        else:
+            messages.error(request, 'The combination of the user name and the password is wrong!')
+            return redirect('login')
+
+
+def logoutpage(request):
+    user_logout(request)
+    cache.delete('user')
+    messages.success(request, f'You have been logged out!')
+    return redirect('home')

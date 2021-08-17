@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Logger(models.Model):
     email = models.CharField(max_length=255)
     date = models.DateTimeField()
@@ -8,13 +9,15 @@ class Logger(models.Model):
     command = models.CharField(max_length=1024)
     if_warn = models.BooleanField()
 
-class UsersDemo(models.Model):
+
+class UserDemo(models.Model):
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
 
 
 class FlagWaf:
     flag_waf = models.BooleanField()
+
     @property
     def lag_waf(self):
         return self.flag_waf
@@ -22,6 +25,7 @@ class FlagWaf:
 
 class User_value:
     user = None
+
     @property
     def user_val(self):
         return self.user
@@ -34,6 +38,7 @@ class WafTreshold:
     @property
     def threshold_xss(self):
         return self.threshold_xss
+
     @property
     def threshold_sql(self):
         return self.threshold_sql

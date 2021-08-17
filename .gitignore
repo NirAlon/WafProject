@@ -2,3 +2,5 @@ venv/
 /secret_key.txt
 .DS_Store
 /myapi/
+/connectionWithDockerModel/.idea/
+.idea/

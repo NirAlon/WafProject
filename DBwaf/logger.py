@@ -1,6 +1,4 @@
 import csv
-from datetime import datetime
-
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
@@ -48,8 +46,3 @@ def export_logger_csv():
         writer.writerow(log)
 
     return response
-
-def save_attack_to_logger(cur_email, res, text, type_attack):
-    Logger.objects.create(
-        email=cur_email, date=datetime.now(), threshold=res * 100,
-        type_attack=type_attack, command=text, if_warn=True)

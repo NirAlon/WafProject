@@ -1,3 +1,4 @@
+
 from django.db import models
 
 
@@ -13,32 +14,3 @@ class Logger(models.Model):
 class UserDemo(models.Model):
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
-
-
-class FlagWaf:
-    flag_waf = models.BooleanField()
-
-    @property
-    def lag_waf(self):
-        return self.flag_waf
-
-
-class User_value:
-    user = None
-
-    @property
-    def user_val(self):
-        return self.user
-
-
-class WafTreshold:
-    threshold_xss = models.FloatField()
-    threshold_sql = models.FloatField()
-
-    @property
-    def threshold_xss(self):
-        return self.threshold_xss
-
-    @property
-    def threshold_sql(self):
-        return self.threshold_sql

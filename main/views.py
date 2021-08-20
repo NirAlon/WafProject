@@ -16,7 +16,7 @@ SQL_THRESHOLD = 0.5
 
 def set_waf_flag_cookie(request):
     select = request.POST.get('radio')
-    if request.session['waf_flag'] is None or select == 'no_protection':
+    if select == 'no_protection':
         request.session['waf_flag'] = False
         request.session['threshold_xss'] = XSS_THRESHOLD
         request.session['threshold_sql'] = SQL_THRESHOLD
@@ -39,6 +39,8 @@ def demo_site(request):
 def demo_setting(request):
     context = {}
     request.session['waf_flag'] = False
+    request.session['threshold_xss'] = XSS_THRESHOLD
+    request.session['threshold_sql'] = SQL_THRESHOLD
     request.session.save()
     request = set_waf_flag_cookie(request)
 

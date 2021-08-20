@@ -1,12 +1,12 @@
 import re
+from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.cache import cache
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.contrib.auth.models import User
-
-from DBwaf.logger import save_attack_to_logger
+from main.models import Logger
 
 regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 PASSWORD_RULES = 'The password must contain: alphabets between [a-z], At least one alphabet of Upper Case [A-Z], ' \
@@ -49,14 +49,6 @@ def authenticate_user(email, password):
     return authenticate(username=email, password=password)
 
 
-def user_login(request, user):
-    return login(request, user)
-
-
-def user_logout(request):
-    return logout(request)
-
-
 @csrf_exempt
 def change_password_anno(request):
     @csrf_protect
@@ -75,9 +67,11 @@ def change_password_anno(request):
                 u.save()
                 messages.success(request, "Password changed! login again with the new password")
                 cur_email = cache.get('user')
-                save_attack_to_logger(cur_email, 0, 'CSRF attack attempt', 'CSRF')
+                l1 = Logger(email=cur_email, threshold=0, command='CSRF attack attempt', type_attack='CSRF', if_warn=True,
+                            date=datetime.now())
+                l1.save()
                 cache.delete('user')
-                user_logout(request)
+                logout(request)
                 return render(request, template_name='main/home.html')
 
     if request.session['waf_flag'] is True:
@@ -101,18 +95,19 @@ def change_password(request):
             u.set_password(new_pss)
             u.save()
             messages.success(request, "Password changed! login again with the new password")
-            user_logout(request)
+            logout(request)
             cache.delete('user')
             return render(request, template_name='main/home.html')
 
+
 def login_page(request):
     if request.method == 'GET':
-        return render(request, template_name='main/login.html')
-
+            if cache.get('user') is None:
+                return render(request, template_name='main/login.html')
+            else: return render(request, template_name='main/home.html')
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-
         if validation_email(email) is False:
             messages.error(request, 'email must be in the format of example@example.com')
             return redirect('login')
@@ -124,7 +119,7 @@ def login_page(request):
         cache.set('user', authenticate_user(email,password))
         if cache.get('user') is not None:
 
-            user_login(request, cache.get('user'))
+            login(request, cache.get('user'))
             messages.success(request, f'You are logged in as {cache.get("user")}')
             return redirect('home')
 
@@ -134,7 +129,7 @@ def login_page(request):
 
 
 def logoutpage(request):
-    user_logout(request)
+    logout(request)
     cache.delete('user')
     messages.success(request, f'You have been logged out!')
-    return redirect('home')
+    return render(request, template_name='main/home.html')

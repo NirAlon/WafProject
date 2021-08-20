@@ -1,13 +1,18 @@
-from DBwaf.logger import save_attack_to_logger
+from datetime import datetime
+
+from main.models import Logger
 from connectionWithDockerModel.main import xss_proccesor, predict_sqli_attack
 
 
 def if_text_vulnerable(text, request):
     res = xss_proccesor(text)
+
     cur_email = request.user.get_username()
 
     if res > float(request.session['threshold_xss']):
-        save_attack_to_logger(cur_email, res, text, type_attack='XSS')
+        l1 = Logger(email=cur_email, threshold=res, command=text, type_attack='Reflected XSS', if_warn=True,
+                    date=datetime.now())
+        l1.save()
         return True
     else:
         return False
@@ -17,7 +22,9 @@ def if_text_vulnerable_sql(text, request):
     res = predict_sqli_attack(text)
     cur_email = request.user.get_username()
     if res > float(request.session['threshold_sql']):
-        save_attack_to_logger(cur_email, res, text, 'SQL INJECTION')
+        l1 = Logger(email=cur_email, threshold=res, command=text, type_attack='SQL', if_warn=True,
+                    date=datetime.now())
+        l1.save()
         return True
     else:
         return False
@@ -29,7 +36,9 @@ def if_text_vulnerable_xss_from_response(text, username, request):
     session_threshold_xss_ = request.session['threshold_xss']
 
     if res > float(session_threshold_xss_):
-        save_attack_to_logger(cur_email, res, text, "Stored XSS")
+        l1 = Logger(email=cur_email, threshold=res, command=text, type_attack='Stored XSS', if_warn=True,
+                    date=datetime.now())
+        l1.save()
         return True
     else:
         return False

@@ -2,10 +2,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
 from DBwaf.waf_agent import if_text_vulnerable_sql, if_text_vulnerable_xss_from_response, if_text_vulnerable
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from main.Serializers import LogPostSerializer
 from django.template import loader
 
 from main.models import UserDemo
@@ -107,14 +105,18 @@ def homepage(request):
 
 
 @api_view(['POST'])
-def api_create_log_view(request):
-    if request.method == 'POST':
-        serializer = LogPostSerializer(data=request.data)
+def sql_api(request):
+    text = request.data.get('text')
+    result = if_text_vulnerable_sql(text, request)
+    json_response = {"sql prediction": result}
+    return Response(json_response)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def xss_api(request):
+    text = request.data.get('text')
+    result = if_text_vulnerable(text, request)
+    json_response = {"xss prediction": result}
+    return Response(json_response)
 
 
 def index(request):

@@ -2,6 +2,13 @@ import csv
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
+from rest_framework import status
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+import DBwaf.Serializers as Serializers
+
 from main.models import Logger
 
 
@@ -46,3 +53,20 @@ def export_logger_csv():
         writer.writerow(log)
 
     return response
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticated])
+def api_get_logger(request):
+    if request.method == 'GET':
+        log = Logger.objects.all()
+        serializer = Serializers.LoggerSerializer(log, many=True)
+        return Response(serializer.data)
+    if request.method == 'POST':
+        serializer = Serializers.LoggerSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
@@ -127,7 +128,7 @@ def login_page(request):
             messages.error(request, 'The combination of the user name and the password is wrong!')
             return redirect('login')
 
-
+@login_required(login_url='/login/')
 def logoutpage(request):
     logout(request)
     cache.delete('user')

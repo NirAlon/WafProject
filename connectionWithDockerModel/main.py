@@ -9,7 +9,8 @@ import cv2
 from connectionWithDockerModel.mitmproxyscanandread import scancoomandsfromfile
 from main.models import Logger
 
-XSS_THRESHOLD = 0.5
+XSS_THRESHOLD = 0.45
+SQL_THRESHOLD = 0.5
 
 # The server URL specifies the endpoint of your server running the ResNet
 # model with the name "xss_model & sql_model" and using the predict interface.
@@ -156,11 +157,18 @@ def predict_sqli_attack(req):
     return result[0][0]
 
 
-def if_text_vulnerable(text):
+def if_xss_text_vulnerable_without_saving_to_logger(text):
     res = xss_proccesor(text)
     if res > XSS_THRESHOLD:
         return True
+    else:
+        return False
 
+
+def if_sql_text_vulnerable_without_saving_to_logger(text):
+    res = predict_sqli_attack(text)
+    if res > SQL_THRESHOLD:
+        return True
     else:
         return False
 
@@ -169,7 +177,7 @@ def main():
     list = (scancoomandsfromfile.makeCommands())
     for l in list:
         if len(l)>1:
-            xss_res = if_text_vulnerable(l)
+            xss_res = if_xss_text_vulnerable_without_saving_to_logger(l)
             if xss_res:
                 Logger.objects.create(
                     email='client', date=datetime.now(), threshold=xss_res * 100,

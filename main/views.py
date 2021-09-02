@@ -2,6 +2,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
 from DBwaf.waf_agent import if_text_vulnerable_sql, if_text_vulnerable_xss_from_response, if_text_vulnerable
+from connectionWithDockerModel.main import if_xss_text_vulnerable_without_saving_to_logger, \
+    if_sql_text_vulnerable_without_saving_to_logger
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.template import loader
@@ -107,14 +109,14 @@ def homepage(request):
 @api_view(['POST'])
 def sql_api(request):
     text = request.data.get('text')
-    result = if_text_vulnerable_sql(text, request)
+    result = if_sql_text_vulnerable_without_saving_to_logger(text)
     json_response = {"sql prediction": result}
     return Response(json_response)
 
 @api_view(['POST'])
 def xss_api(request):
     text = request.data.get('text')
-    result = if_text_vulnerable(text, request)
+    result = if_xss_text_vulnerable_without_saving_to_logger(text)
     json_response = {"xss prediction": result}
     return Response(json_response)
 

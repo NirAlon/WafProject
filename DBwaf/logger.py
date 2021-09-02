@@ -1,17 +1,18 @@
 import csv
+
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
 from rest_framework import status
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 import DBwaf.Serializers as Serializers
 
 from main.models import Logger
 
-
+@login_required(login_url='/login/')
 def logger_page(request):
     current_email = request.user.get_username()
     if request.method == 'GET':
@@ -40,7 +41,7 @@ def logger_page(request):
 
         return render(request, template_name='main/logger.html', context={'loggers': loggers1})
 
-
+@login_required(login_url='/login/')
 def export_logger_csv():
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="logger.csv"'
@@ -56,7 +57,6 @@ def export_logger_csv():
 
 
 @api_view(['GET', 'POST'])
-@authentication_classes([SessionAuthentication, BasicAuthentication])
 @permission_classes([IsAdminUser])
 def api_get_logger(request):
     if request.method == 'GET':

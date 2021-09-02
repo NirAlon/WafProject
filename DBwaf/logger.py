@@ -5,7 +5,7 @@ from django.db.models import Q
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 import DBwaf.Serializers as Serializers
 
@@ -57,7 +57,7 @@ def export_logger_csv():
 
 @api_view(['GET', 'POST'])
 @authentication_classes([SessionAuthentication, BasicAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def api_get_logger(request):
     if request.method == 'GET':
         log = Logger.objects.all()

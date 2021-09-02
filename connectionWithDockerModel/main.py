@@ -13,7 +13,7 @@ XSS_THRESHOLD = 0.5
 
 # The server URL specifies the endpoint of your server running the ResNet
 # model with the name "xss_model & sql_model" and using the predict interface.
-SERVER_URL_XSS = 'http://localhost:8501/v1/models/resnet:predict'
+SERVER_URL_XSS = 'http://localhost:8501/v1/models/xss:predict'
 SERVER_URL_SQL = 'http://localhost:8500/v1/models/sql:predict'
 
 

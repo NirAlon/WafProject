@@ -76,7 +76,7 @@ def demo_sql(request):
 
         user_name = request.POST.get('username')
         user_password = request.POST.get('password')
-        sql = f"SELECT * FROM main_usersDemo WHERE username = '{user_name}' AND password = '{user_password}'"
+        sql = f"SELECT * FROM main_userdemo WHERE username = '{user_name}' AND password = '{user_password}'"
 
         if request.session['waf_flag'] is True:
             context = {'message_waf': 'The site is protected by WAF'}
@@ -91,6 +91,7 @@ def demo_sql(request):
         else:
             context = {'message_waf': 'The site is unprotected by WAF'}
             cur_user = UserDemo.objects.raw(sql)
+            print(cur_user)
         try:
             messages.success(request, str(cur_user[0].username, "user found"))
         except IndexError:

@@ -2,37 +2,48 @@
 
 ***
 ### Summary 
-The project objective is building a Web Application Firewall that monitors and analyzes HTTP/HTTPS requests that are  designated to defence web server from common malicious  web attacks.
-
-Based on deep learning algorithm (CNN) on TensorFlow. 
-
-Deployed on AWS EC2 instance and based on REST API. 
-
-WAF detects and prevents XSS, SQL injection, and CSRF cyberattacks on HTTP protocol.
+WAF detects and prevents XSS, SQL injection, and CSRF cyberattacks on HTTP/S protocol.
 
 The system activity and network traffic are shown in several ways:
 
-∙ System textual smart log that is available in the hosting machine
+∙ RESTAPI
 
-∙ Web based log 
+∙ Web based log
 
-### Vulnerable web application:
-To approve the waf detection of cyberattacks on web applications
-the project contain a vulnerable website.
+WAF is based on deep learning algorithm (CNN) on TensorFlow. 
 
-the purpose of the website is to get **!HACKED!** in different ways that the WAF can detect.
+Deployed on AWS EC2 instance and response on REST API.
+### WAF XSS AND SQL API TESTING:
+###Prerequisites:
+* Postman
 
-the website have 5 pages:
-* Sql injection page: This page demonstrates login system page without the WAF protection anyone can use malicious SQL INJECTION code for hacking the database.
-* Reflected XSS page: This page demonstrates posting page to the global network without the WAF protection anyone can use malicious JavaScript codes for damage the page and steal data from other users.
-* Stored XSS page: This page demonstrates users in the database that use the user registration page for input XSS malicious code. for example instead of first name the user put XSS code to store in the database.
-* CSRF page: this page can be hacked if you removed the *python annotation*, this type of attack use the csrf token to validate the user actions.
-* Settings page: in this page you choose if you want to defend from the different attacks and activate the WAF protection. once you activate the WAF all the next malicious attacks will be blocked by the **WAF MODELS**
+https://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/sql_api
+
+{
+"text":"enter sql injection code OR any other text"
+}
+
+![](sql_demo_api.gif)
+
+https://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/xss_api
+
+{
+"text":"enter xss code OR any other text"
+}
+![](xss_demo_api.gif)
+
+
+
 
 ### Link to the demo_site with WAF protection option : 
-http://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/demo_site
+https://niralonwaf.tk/demo_site
 
-##**HOW TO MAKE IT WORKS?**
+![](xss_attack.gif)
+![](sql_injection.gif)
+![](xss_attack_stored.gif)
+
+
+##**HOW TO MAKE IT RUN?**
 
 1. run pip install requirements.txt file
 2. run python manage.py runserver

@@ -39,14 +39,14 @@ def check_strong_password(password: object) -> object:
         return False
 
 
-def validation_email(email):
+def validation_email(email: str) -> bool:
     if re.search(regex, email):
         return True
     else:
         return False
 
 
-def authenticate_user(email, password):
+def authenticate_user(email: str, password: str):
     return authenticate(username=email, password=password)
 
 

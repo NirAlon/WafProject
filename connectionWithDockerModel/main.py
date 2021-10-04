@@ -119,7 +119,7 @@ def clean_data(input_val):
     return input_val
 
 
-def xss_proccesor(req):
+def xss_proccesor(req) -> float:
     list_proxy = [req]
     for l in list_proxy:
         if(len(l)>0):
@@ -139,7 +139,7 @@ def xss_proccesor(req):
     return res[0][0]
 
 
-def predict_sqli_attack(req):
+def predict_sqli_attack(req: str) -> float:
 
     myvectorizer = pickle.load(open('connectionWithDockerModel/vectorizer_cnn', 'rb'))
 
@@ -157,7 +157,7 @@ def predict_sqli_attack(req):
     return result[0][0]
 
 
-def if_xss_text_vulnerable_without_saving_to_logger(text):
+def if_xss_text_vulnerable_without_saving_to_logger(text: str) -> bool:
     res = xss_proccesor(text)
     if res > XSS_THRESHOLD:
         return True
@@ -165,7 +165,7 @@ def if_xss_text_vulnerable_without_saving_to_logger(text):
         return False
 
 
-def if_sql_text_vulnerable_without_saving_to_logger(text):
+def if_sql_text_vulnerable_without_saving_to_logger(text: str) -> bool:
     res = predict_sqli_attack(text)
     if res > SQL_THRESHOLD:
         return True

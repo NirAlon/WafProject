@@ -73,28 +73,24 @@ def demo_sql(request):
         return render(request, 'main/sql_demo.html', context)
 
     if request.method == 'POST':
-
+        cur_user = None
         user_name = request.POST.get('username')
         user_password = request.POST.get('password')
         sql = f"SELECT * FROM main_userdemo WHERE username = '{user_name}' AND password = '{user_password}'"
-
+        for u in UserDemo.objects.raw(sql):
+            cur_user = u
         if request.session['waf_flag'] is True:
             context = {'message_waf': 'The site is protected by WAF'}
             res_username = if_text_vulnerable_sql(user_name, request)
             res_user_password = if_text_vulnerable_sql(user_password, request)
-
             if res_username or res_user_password:
                 messages.error(request, "sql injection!")
                 return render(request, 'main/sql_demo.html', context)
-            else:
-                cur_user = UserDemo.objects.raw(sql)
         else:
             context = {'message_waf': 'The site is unprotected by WAF'}
-            cur_user = UserDemo.objects.raw(sql)
-            print(cur_user)
         try:
-            messages.success(request, str(cur_user[0].username, "user found"))
-        except IndexError:
+            messages.success(request, 'You logged in as {}'.format(cur_user.username))
+        except AttributeError:
             messages.error(request, "user not found")
         except Exception as e:
             print(e.__class__)

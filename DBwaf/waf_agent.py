@@ -18,7 +18,7 @@ def if_text_vulnerable(text, request):
         return False
 
 
-def if_text_vulnerable_sql(text, request):
+def if_text_vulnerable_sql(text: str, request):
     res = predict_sqli_attack(text)
     cur_email = request.user.get_username()
     if res > float(request.session['threshold_sql']):

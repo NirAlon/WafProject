@@ -17,7 +17,7 @@ Deployed on AWS EC2 instance and response on REST API.
 ###Prerequisites:
 * Postman
 
-https://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/sql_api
+https://niralonwaf.tk/sql_api
 
 {
 "text":"enter sql injection code OR any other text"
@@ -25,7 +25,7 @@ https://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/sql_api
 
 ![](sql_demo_api.gif)
 
-https://ec2-3-143-111-190.us-east-2.compute.amazonaws.com/xss_api
+https://niralonwaf.tk/xss_api
 
 {
 "text":"enter xss code OR any other text"

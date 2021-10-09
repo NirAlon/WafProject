@@ -5,10 +5,13 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.db.models import Q
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 import DBwaf.Serializers as Serializers
+
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+
 
 from main.models import Logger
 
@@ -57,7 +60,8 @@ def export_logger_csv():
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
+@authentication_classes((JSONWebTokenAuthentication,))
 def api_get_logger(request):
     if request.method == 'GET':
         log = Logger.objects.all()

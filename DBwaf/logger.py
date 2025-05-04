@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 import DBwaf.Serializers as Serializers
 
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 from main.models import Logger
@@ -61,7 +61,7 @@ def export_logger_csv():
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-@authentication_classes((JSONWebTokenAuthentication,))
+@authentication_classes((JWTAuthentication,))
 def api_get_logger(request):
     if request.method == 'GET':
         log = Logger.objects.all()

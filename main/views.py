@@ -110,6 +110,7 @@ def sql_api(request):
     json_response = {"sql prediction": result}
     return Response(json_response)
 
+
 @api_view(['POST'])
 def xss_api(request):
     text = request.data.get('text')

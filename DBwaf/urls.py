@@ -1,8 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 
-from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token, refresh_jwt_token
-
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView, token_refresh
 
 import DBwaf.logger
 import DBwaf.user
@@ -15,7 +14,6 @@ urlpatterns = [
     path('login/', DBwaf.user.login_page, name='login'),
     path('logout/', DBwaf.user.logoutpage, name='logout'),
     path('change_password/', DBwaf.user.change_password_anno, name='change_pass'),
-    path('api/token/', obtain_jwt_token),
-    path('api/token/verify/', verify_jwt_token),
-    path('api/token/refresh/', refresh_jwt_token),
+    path('api/token/', TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name="token_refresh"),
 ]

@@ -15,7 +15,7 @@ SQL_THRESHOLD = 0.5
 SERVER_URL_XSS = 'http://localhost:8501/v1/models/xssmodel:predict'
 SERVER_URL_SQL = 'http://localhost:8500/v1/models/sqlmodel:predict'
 
-VECTORIZER_PATH = Path(__file__).parent / "vectorizer_cnn"
+VECTORIZER_PATH = Path(__file__).parent / "vectorizer_cnn.pkl"
 with open(VECTORIZER_PATH, "rb") as f:
     _vectorizer = pickle.load(f)
 

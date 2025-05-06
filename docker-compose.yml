@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+  tfserving_sql:
+    image: bitnami/tensorflow-serving
+    ports:
+      - "8500:8500"
+      - "8501:8501"
+    volumes:
+      - ./model-data/sql/1:/bitnami/model-data/1
+    environment:
+      - TENSORFLOW_SERVING_MODEL_NAME=sql
+
+  tfserving_xss:
+    image: bitnami/tensorflow-serving
+    ports:
+      - "8600:8500"
+      - "8601:8501"
+    volumes:
+      - ./model-data/xss/1:/bitnami/model-data/1
+    environment:
+      - TENSORFLOW_SERVING_MODEL_NAME=xss
+
+  sqli-service:
+    build:
+      context: .
+      dockerfile: sqli-service/Dockerfile
+    depends_on:
+      - tfserving_sql
+    ports:
+      - "8001:8001"
+
+  xss-service:
+    build:
+      context: .
+      dockerfile: xss-service/Dockerfile
+    depends_on:
+      - tfserving_xss
+    ports:
+      - "8002:8002"
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    depends_on:
+      - sqli-service
+      - xss-service
+    ports:
+      - "8000:8000"

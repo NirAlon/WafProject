@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   tfserving_sql:
     image: bitnami/tensorflow-serving
@@ -47,3 +46,15 @@ services:
       - xss-service
     ports:
       - "8000:8000"
+
+  demo-frontend:
+    build:
+      context: .
+      dockerfile: demo-frontend/Dockerfile
+    depends_on:
+      - orchestrator
+    ports:
+      - "8003:8003"
+    environment:
+      # inside this container, 'orchestrator' is the service hostname
+      - WAF_BASE=http://orchestrator:8000

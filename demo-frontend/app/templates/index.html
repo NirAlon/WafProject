@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WAF Demo Dashboard</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <style>
+    body { font-family: 'Poppins', sans-serif; background-color: #f4f7fa; }
+    .navbar { background-color: #2C3E50; }
+    .navbar-brand { color: #E67E22 !important; font-weight: 600; }
+    .card-brand-primary { background-color: #E67E22; color: #fff; }
+    .card-brand-secondary { background-color: #34495E; color: #fff; }
+    .btn-primary { background-color: #E67E22; border: none; }
+    .btn-primary:hover { background-color: #d35400; }
+    .badge-allowed { background-color: #27ae60; }
+    .badge-blocked { background-color: #c0392b; }
+    code { font-family: monospace; }
+  </style>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">WAF Shield</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link text-light" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="/docs">Docs</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <h1 class="display-5 fw-semibold">WAF Demo Dashboard</h1>
+      <p class="text-muted">Experience real-time ML-powered attack detection</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-3">
+        <div class="card card-brand-primary text-center p-3">
+          <div class="card-body">
+            <h6>Total Tests</h6>
+            <p class="fs-3 fw-semibold" data-total>{{ logs|length }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-brand-secondary text-center p-3">
+          <div class="card-body">
+            <h6>Blocked</h6>
+            <p class="fs-3 fw-semibold" data-blocked>{{ logs|selectattr('allowed','equalto',false)|list|length }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-brand-primary text-center p-3">
+          <div class="card-body">
+            <h6>Allowed</h6>
+            <p class="fs-3 fw-semibold" data-allowed>{{ logs|selectattr('allowed','equalto',true)|list|length }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-brand-secondary text-center p-3">
+          <div class="card-body">
+            <h6>Avg. Score</h6>
+            {% set non_null_scores = logs|map(attribute='score')|select()|list %}
+            {% set avg = non_null_scores|sum / (non_null_scores|length if non_null_scores|length > 0 else 1) %}
+            <p class="fs-3 fw-semibold">{{ '%.2f' % avg }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payload Tester -->
+    <div class="card mb-5 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-4">Test Payload</h5>
+        <form method="post" class="row g-3">
+          <div class="col-md-2">
+            <select name="attack_type" class="form-select">
+              <option value="sql">SQL Injection</option>
+              <option value="xss">XSS Attack</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <input name="payload" type="text" class="form-control" placeholder="Enter payload…" required>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Send</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Score Chart -->
+    <div class="card mb-5 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Recent Scores</h5>
+        <canvas id="scoresChart" height="100"></canvas>
+      </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Recent Tests Log</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Payload</th>
+                <th>Result</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in logs %}
+              <tr>
+                <td>{{ entry.time }}</td>
+                <td>{{ entry.type }}</td>
+                <td><code>{{ entry.payload }}</code></td>
+                <td>
+                  {% if entry.allowed %}
+                    <span class="badge badge-allowed">Allowed</span>
+                  {% else %}
+                    <span class="badge badge-blocked">Blocked</span>
+                  {% endif %}
+                </td>
+                <td>{{ entry.score or '-' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js Script -->
+  <script>
+    const logData = {{ logs|tojson }};
+    const labels = logData.map(e => e.time).reverse();
+    const scores = logData.map(e => e.score || 0).reverse();
+
+    new Chart(document.getElementById('scoresChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Score',
+          data: scores,
+          fill: true,
+          tension: 0.4,
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true, max: 1 } }
+      }
+    });
+  </script>
+  <!-- Socket.IO client -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  socket.on('new_log', entry => {
+    // prepend a new row to the table
+    const tbody = document.querySelector('table tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${entry.time}</td>
+      <td>${entry.type}</td>
+      <td><code>${entry.payload}</code></td>
+      <td>
+        <span class="badge ${entry.allowed ? 'badge-allowed' : 'badge-blocked'}">
+          ${entry.allowed ? 'Allowed' : 'Blocked'}
+        </span>
+      </td>
+      <td>${entry.score ?? '-'}</td>
+    `;
+    tbody.prepend(tr);
+
+    // update stats cards
+    document.querySelector('[data-total]').textContent++;
+    if (entry.allowed) {
+      document.querySelector('[data-allowed]').textContent++;
+    } else {
+      document.querySelector('[data-blocked]').textContent++;
+    }
+    // update avg score card & chart...
+    // (you can push entry.score into the Chart.js dataset here)
+  });
+</script>
+</body>
+</html>

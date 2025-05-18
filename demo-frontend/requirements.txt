@@ -3,3 +3,4 @@ requests
 Flask-SQLAlchemy
 Flask-SocketIO
 eventlet
+flask_migrate

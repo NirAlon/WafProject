@@ -51,7 +51,9 @@
       <h1 class="display-5 fw-semibold">WAF Demo Dashboard</h1>
       <p class="text-muted">Experience real-time ML-powered attack detection</p>
     </div>
-
+    <div class="text-center mb-4">
+      <p class="text-muted" id="client-info">Detecting your location...</p>
+    </div>
     <!-- Statistics Cards -->
     <div class="row g-4 mb-5">
       <div class="col-md-3">
@@ -132,6 +134,8 @@
                 <th>Payload</th>
                 <th>Result</th>
                 <th>Score</th>
+                <th>IP</th>
+                <th>Location</th>
               </tr>
             </thead>
             <tbody>
@@ -148,6 +152,14 @@
                   {% endif %}
                 </td>
                 <td>{{ entry.score or '-' }}</td>
+                <td>{{ entry.ip or '-' }}</td>
+                <td>
+                  {% if entry.city and entry.country %}
+                    {{ entry.city }}, {{ entry.country }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -199,7 +211,9 @@
         </span>
       </td>
       <td>${entry.score ?? '-'}</td>
-    `;
+      <td>${entry.ip ?? '-'}</td>
+      <td>${entry.city && entry.country ? `${entry.city}, ${entry.country}` : '-'}</td>
+      `;
     tbody.prepend(tr);
 
     // update stats cards
@@ -212,6 +226,21 @@
     // update avg score card & chart...
     // (you can push entry.score into the Chart.js dataset here)
   });
+</script>
+<script>
+  async function fetchClientInfo() {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      const info = `Your IP: ${data.ip} | Location: ${data.city}, ${data.region}, ${data.country_name}`;
+      document.getElementById('client-info').textContent = info;
+    } catch (error) {
+      document.getElementById('client-info').textContent = "Unable to detect IP/location.";
+      console.error("Error fetching client info:", error);
+    }
+  }
+
+  fetchClientInfo();
 </script>
 </body>
 </html>

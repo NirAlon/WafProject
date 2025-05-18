@@ -21,6 +21,24 @@ WAF_BASE = os.getenv("WAF_BASE", "http://localhost:8000")
 db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode='eventlet')
 
+from flask_migrate import Migrate
+migrate = Migrate(app, db)
+
+
+def get_ip_info(ip):
+    try:
+        response = requests.get(f'https://ipapi.co/{ip}/json/')
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'ip': ip,
+                'city': data.get('city'),
+                'country': data.get('country_name')
+            }
+    except:
+        pass
+    return {'ip': ip, 'city': None, 'country': None}
+
 
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,6 +47,9 @@ class Log(db.Model):
     payload = db.Column(db.Text, nullable=False)
     allowed = db.Column(db.Boolean, nullable=False)
     score = db.Column(db.Float, nullable=True)
+    ip = db.Column(db.String, nullable=True)
+    city = db.Column(db.String, nullable=True)
+    country = db.Column(db.String, nullable=True)
 
     def to_dict(self):
         return {
@@ -37,7 +58,10 @@ class Log(db.Model):
             "type": self.type,
             "payload": self.payload,
             "allowed": self.allowed,
-            "score": self.score
+            "score": self.score,
+            "ip": self.ip,
+            "city": self.city,
+            "country": self.country
         }
 
 
@@ -55,12 +79,18 @@ def index():
         except Exception as e:
             allowed, score, data = False, None, {"error": str(e)}
 
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        geo = get_ip_info(ip)
+
         entry = Log(
-            time=datetime.now().strftime("%H:%M:%S"),
+            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             type=attack_type,
             payload=payload,
             allowed=allowed,
             score=score,
+            ip=geo['ip'],
+            city=geo['city'],
+            country=geo['country']
         )
         db.session.add(entry)
         db.session.commit()
@@ -71,7 +101,10 @@ def index():
             "type": entry.type,
             "payload": entry.payload,
             "allowed": entry.allowed,
-            "score": entry.score
+            "score": entry.score,
+            "ip": entry.ip,
+            "city": entry.city,
+            "country": entry.country
         })
 
         flash(f"{attack_type.upper()} test: {'ALLOWED' if allowed else 'BLOCKED'} (score = {score})",
@@ -91,4 +124,4 @@ def docs():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    socketio.run(app, host="0.0.0.0", port=8004, debug=True)
+    socketio.run(app, host="0.0.0.0", port=8003, debug=True)

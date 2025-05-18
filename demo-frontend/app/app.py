@@ -9,7 +9,7 @@ import requests
 from flask import Flask, request, flash, url_for, render_template, redirect
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'devkey')
@@ -91,4 +91,4 @@ def docs():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    socketio.run(app, host="0.0.0.0", port=8003, debug=True)
+    socketio.run(app, host="0.0.0.0", port=8004, debug=True)

@@ -13,8 +13,8 @@ async def sql_api(payload: RequestPayload):
         preds = resp.json()["predictions"]
         print("SQLi service returned:", preds)
         score = preds[0][0]
-        if score > 0.5:
-            raise HTTPException(403, "SQL Injection blocked")
+        if score > 0.98:
+            return {"allowed": False, "score": score}
         return {"allowed": True, "score": score}
 
 @app.post("/xss_api")
@@ -26,6 +26,6 @@ async def xss_api(payload: RequestPayload):
         print("XSS service returned:", data)
         preds = resp.json()["predictions"]
         score = preds[0][0]
-        if score > 0.5:
-            raise HTTPException(403, "XSS attack blocked")
+        if score > 0.05:
+            return {"allowed": False, "score": score}
         return {"allowed": True, "score": score}
